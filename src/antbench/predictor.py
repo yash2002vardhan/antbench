@@ -32,6 +32,8 @@ Either way the experiment costs well under a dollar, run once, offline.
 from __future__ import annotations
 
 import ast
+import hashlib
+import json
 import math
 import random
 import re
@@ -318,17 +320,62 @@ class LLMPredictor(Predictor):
 
     Run once per delegation, offline, to establish the ceiling. Not a proposal
     for what a serving layer should do -- see the module docstring.
+
+    DETERMINISM, and why it is load-bearing here. An unpinned version of this
+    predictor moved the headline lexical-vs-LLM difference by roughly +/-0.025
+    on re-runs over the *same* 57 delegations -- a spread comparable to the
+    effect being measured (about -0.05). A benchmark that invites reproduction
+    cannot ship a predictor whose score changes each time it is asked.
+
+    Two mechanisms, because neither alone is sufficient. `temperature=0` and a
+    fixed `seed` make the API call as deterministic as the provider offers, and
+    responses are cached to disk keyed by (model, budget, message, repo index)
+    so a re-run replays the recorded ranking instead of re-querying. The cache
+    is the stronger guarantee: greedy decoding still drifts across model
+    revisions, and the cache pins the exact predictions a published number was
+    computed from.
     """
 
     name = "llm"
 
-    def __init__(self, model: str = PREDICTOR_MODEL) -> None:
+    def __init__(
+        self,
+        model: str = PREDICTOR_MODEL,
+        cache_dir: Path | None = None,
+    ) -> None:
         self._model = model
         self._llm = ChatOpenAI(
-            model=model, api_key=load_api_key()
+            model=model, api_key=load_api_key(), temperature=0, seed=20260829
         ).with_structured_output(_FilePrediction)
+        self._cache_dir = cache_dir or (
+            Path(__file__).resolve().parents[2] / "data" / "llm_cache"
+        )
+        self._cache_dir.mkdir(parents=True, exist_ok=True)
+
+    def _cache_key(self, message: str, index: RepoIndex, budget: int) -> Path:
+        # The repo index is part of the key: the same delegation scored against
+        # a different checkout is a different question, and scorer.py rebuilds
+        # the index per base commit.
+        payload = "\x00".join(
+            [self._model, str(budget), message, str(len(index.paths))]
+            + sorted(index.paths)[:200]
+        )
+        digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
+        return self._cache_dir / f"{digest}.json"
 
     def predict(self, message: str, index: RepoIndex, budget: int) -> Prediction:
+        cached = self._cache_key(message, index, budget)
+        if cached.is_file():
+            try:
+                stored = json.loads(cached.read_text())
+                return Prediction(
+                    paths=stored["paths"],
+                    rationale=stored.get("rationale", ""),
+                    model_calls=0,
+                )
+            except (OSError, ValueError, KeyError):
+                pass  # a corrupt entry re-queries rather than failing the run
+
         try:
             result = self._llm.invoke(
                 [
@@ -350,11 +397,20 @@ class LLMPredictor(Predictor):
         # Drop paths that do not exist. A hallucinated path cannot be
         # prefetched, so counting it would credit the predictor for nothing.
         valid = [p for p in dict.fromkeys(result.paths) if p in known]
-        return Prediction(
+        prediction = Prediction(
             paths=valid[:budget],
             rationale=result.reasoning[:300],
             model_calls=1,
         )
+        try:
+            cached.write_text(
+                json.dumps(
+                    {"paths": prediction.paths, "rationale": prediction.rationale}
+                )
+            )
+        except OSError:
+            pass  # an unwritable cache degrades to re-querying, not to failing
+        return prediction
 
 
 def build_predictors(include_llm: bool = True) -> list[Predictor]:

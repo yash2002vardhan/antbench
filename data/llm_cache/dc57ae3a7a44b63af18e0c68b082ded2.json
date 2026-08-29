@@ -1,0 +1,1 @@
+{"paths": ["requests/auth.py", "test_requests.py"], "rationale": "The Digest auth header is built in requests/auth.py (HTTPDigestAuth). The unit test to assert qop quoting should be added/updated in the project test file test_requests.py so tests run without network."}

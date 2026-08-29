@@ -1,0 +1,1 @@
+{"paths": ["astropy/io/fits/header.py", "astropy/io/fits/tests/test_fitsheader.py"], "rationale": "The change is to Header.fromstring, which is implemented in astropy/io/fits/header.py; tests must be added/updated in the FITS tests, e.g. astropy/io/fits/tests/test_fitsheader.py to cover bytes and str inputs and decoding behavior."}

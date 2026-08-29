@@ -1,0 +1,50 @@
+==================================================================
+PRE-REGISTERED PREDICTION: sphinx
+==================================================================
+  predicted : 0.40-0.60 recall@8
+  falsify   : below 0.15
+  observed  : 0.246  (n=7 delegations)
+  verdict   : PARTIAL — outside the interval but above falsification
+
+==================================================================
+REPOSITORY STRUCTURE vs PREDICTABILITY
+==================================================================
+  repo                          files defs/file  recall@8   n
+  astropy/astropy                 776      14.4      0.52   5
+  matplotlib/matplotlib           883      10.5      0.64   6
+  mwaskom/seaborn                 145      16.3      0.50   2
+  psf/requests                     33      20.0      0.67   8
+  pydata/xarray                   161      32.8      0.67   9
+  pylint-dev/pylint              1358       5.5      0.01   7
+  pytest-dev/pytest               216      27.3      0.62  11
+  scikit-learn/scikit-learn       889      10.1      0.54   2
+  sphinx-doc/sphinx               540      11.0      0.25   7
+
+  corr(defs/file, recall@8) = +0.65 over 9 repos
+
+==================================================================
+CORPUS
+==================================================================
+  traces                           41
+  delegations                      57
+  scorable                         57
+  completed                        45
+  mean_accesses_per_delegation     27.42
+  mean_needed_paths                4.04
+  mean_waste_ratio                 0.346
+  wasted_tokens                    349902
+
+==================================================================
+PITCH TABLE
+==================================================================
+| predictor | recall@8 | precision@1 | any_hit@8 | cost | n |
+|---|---|---|---|---|---|
+| random | 0.056 | 0.018 | 0.193 | free | 57 |
+| lexical (IDF) | **0.501** | 0.509 | 0.807 | free | 57 |
+| LLM (gpt-5-mini) | 0.532 | 0.702 | 0.895 | one call per delegation | 57 |
+
+==================================================================
+SIGNIFICANCE (recall@8, paired permutation)
+==================================================================
+  lexical vs random: mean +0.445  45W/3L/9T  p=0.0000  (separated at 0.05)
+  lexical vs llm: mean -0.031  17W/23L/17T  p=0.5975  (NOT separated at 0.05)

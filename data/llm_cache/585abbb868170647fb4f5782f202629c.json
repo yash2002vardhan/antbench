@@ -1,0 +1,1 @@
+{"paths": ["src/_pytest/capture.py", "testing/test_capture.py"], "rationale": "The change must be made in the EncodedFile implementation in src/_pytest/capture.py; add regression tests that assert sys.stdout/stderr.mode and write behavior under pytest capture in testing/test_capture.py."}
