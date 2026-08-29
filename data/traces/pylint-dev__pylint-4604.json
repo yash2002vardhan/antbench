@@ -1,0 +1,602 @@
+{
+  "trace_id": "f9c739ee",
+  "repo": "pylint-dev/pylint",
+  "base_commit": "1e55ae64624d28c5fe8b63ad7979880ee2e6ef3f",
+  "task_prompt": "unused-import false positive for a module used in a type comment\n### Steps to reproduce\r\n\r\n```python\r\n\"\"\"Docstring.\"\"\"\r\n\r\nimport abc\r\nfrom abc import ABC\r\n\r\nX = ...  # type: abc.ABC\r\nY = ...  # type: ABC\r\n```\r\n\r\n### Current behavior\r\n\r\n```\r\n************* Module a\r\n/tmp/a.py:3:0: W0611: Unused import abc (unused-import)\r\n\r\n-----------------------------------\r\nYour code has been rated at 7.50/10\r\n```\r\n\r\n### Expected behavior\r\n\r\n`unused-import` should not be emitted.\r\n\r\n### pylint --version output\r\n\r\nResult of `pylint --version` output:\r\n\r\n```\r\npylint 2.8.3\r\nastroid 2.5.6\r\nPython 3.9.2 (default, Feb 28 2021, 17:03:44) \r\n[GCC 10.2.1 20210110]\r\n```\r\n\r\nThis is a follow up to #3112.\n",
+  "source": "swebench",
+  "delegations": [
+    {
+      "delegation_id": "f1a2b011",
+      "parent_task_id": "f9c739ee",
+      "worker_id": "w-a0e8e1",
+      "message": "Goal: W0611 (unused-import) must not be emitted when an import is used in a type comment, including dotted references like \"abc.ABC\". The current false positive shows up for:\n\n    import abc\n    from abc import ABC\n    X = ...  # type: abc.ABC\n    Y = ...  # type: ABC\n\nToday only the module import \"abc\" is flagged as unused. After your change, neither import should be flagged.\n\nWhat to change:\n- In the import-usage tracking (the checker that emits W0611), make sure names referenced in type comments are visited/credited the same way as names in annotations. If the AST exposes a parsed form for type comments on assignment/arguments/etc., walk that structure and record name usages. If not, reuse the existing helper(s) used for annotation traversal to parse and walk type comments.\n- Handle dotted names inside type comments: for an expression like \"abc.ABC\", ensure that the top-level name (\"abc\") is marked as used. This should also naturally handle simple names like \"ABC\".\n- Do not treat string literals in runtime code as type comments; restrict to actual type comment fields provided by the AST/astroid for PEP 484 type comments.\n\nTests/verification:\n- Add a functional test that uses the example above and asserts that no W0611 messages are produced.\n- Add a small negative control in the same test (e.g., also import math and don’t reference it anywhere) to confirm W0611 still fires for truly unused imports.\n- Optionally add a case with a function-level type comment referencing a dotted name (e.g., def f(x):  # type: (abc.ABC) -> None) to ensure parity at function scope, if supported in the current astroid version.\n\nHow to tell it’s done:\n- Running the test suite includes your new tests and they pass.\n- Manually running pylint on the provided snippet returns no W0611 for either import, while still reporting W0611 for an actually unused import in your negative control.",
+      "issued_at_turn": 0,
+      "repo_head": "1e55ae64624d28c5fe8b63ad7979880ee2e6ef3f",
+      "accesses": [
+        {
+          "access_index": 0,
+          "turn": 1,
+          "kind": "grep",
+          "query": "W0611",
+          "resolved_paths": [
+            "tests/test_self.py",
+            "tests/regrtest_data/import_package_subpackage_module.py",
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 73,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:28.238509+00:00"
+        },
+        {
+          "access_index": 1,
+          "turn": 2,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4933,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:29.345048+00:00"
+        },
+        {
+          "access_index": 2,
+          "turn": 3,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4272,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:30.482387+00:00"
+        },
+        {
+          "access_index": 3,
+          "turn": 4,
+          "kind": "symbol_lookup",
+          "query": "visit_assign",
+          "resolved_paths": [
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/variables.py",
+            "pylint/checkers/classes.py",
+            "pylint/checkers/base.py",
+            "pylint/checkers/strings.py",
+            "pylint/extensions/redefined_variable_type.py",
+            "pylint/checkers/refactoring/refactoring_checker.py"
+          ],
+          "result_tokens": 151,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:31.748718+00:00"
+        },
+        {
+          "access_index": 4,
+          "turn": 5,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4919,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:32.882435+00:00"
+        },
+        {
+          "access_index": 5,
+          "turn": 6,
+          "kind": "grep",
+          "query": "type_comment",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 119,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:34.550983+00:00"
+        },
+        {
+          "access_index": 6,
+          "turn": 7,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4578,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:36.326312+00:00"
+        },
+        {
+          "access_index": 7,
+          "turn": 8,
+          "kind": "grep",
+          "query": "_store_type_annotation_node",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 107,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:39.005466+00:00"
+        },
+        {
+          "access_index": 8,
+          "turn": 9,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4163,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:40.120185+00:00"
+        },
+        {
+          "access_index": 9,
+          "turn": 10,
+          "kind": "grep",
+          "query": "type_comment",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 119,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:44.711136+00:00"
+        },
+        {
+          "access_index": 10,
+          "turn": 11,
+          "kind": "test_read",
+          "query": "tests/functional/u/unused/unused_typing_imports.py",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_typing_imports.py"
+          ],
+          "result_tokens": 738,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:20:46.155795+00:00"
+        },
+        {
+          "access_index": 11,
+          "turn": 12,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 3866,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:21:08.137765+00:00"
+        },
+        {
+          "access_index": 12,
+          "turn": 13,
+          "kind": "grep",
+          "query": ".type_comment",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 119,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:21:13.218483+00:00"
+        },
+        {
+          "access_index": 13,
+          "turn": 14,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4907,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:21:14.634101+00:00"
+        },
+        {
+          "access_index": 14,
+          "turn": 15,
+          "kind": "dir_list",
+          "query": "tests/functional/u/unused",
+          "resolved_paths": [
+            "tests/functional/u/unused"
+          ],
+          "result_tokens": 206,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:21:36.751553+00:00"
+        },
+        {
+          "access_index": 15,
+          "turn": 16,
+          "kind": "test_read",
+          "query": "tests/functional/u/unused/unused_import.py",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_import.py"
+          ],
+          "result_tokens": 641,
+          "hit": true,
+          "label": "test_context",
+          "timestamp": "2026-08-27T12:21:38.306647+00:00"
+        },
+        {
+          "access_index": 16,
+          "turn": 17,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 4896,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:21:57.842254+00:00"
+        },
+        {
+          "access_index": 17,
+          "turn": 18,
+          "kind": "symbol_lookup",
+          "query": "_store_type_annotation_node",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 23,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:21:59.273279+00:00"
+        },
+        {
+          "access_index": 18,
+          "turn": 21,
+          "kind": "dir_list",
+          "query": "tests/functional/u",
+          "resolved_paths": [
+            "tests/functional/u"
+          ],
+          "result_tokens": 243,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:22:37.848942+00:00"
+        },
+        {
+          "access_index": 19,
+          "turn": 22,
+          "kind": "dir_list",
+          "query": "tests/functional/u/unused",
+          "resolved_paths": [
+            "tests/functional/u/unused"
+          ],
+          "result_tokens": 206,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:22:39.096344+00:00"
+        },
+        {
+          "access_index": 20,
+          "turn": 23,
+          "kind": "test_read",
+          "query": "tests/functional/u/unused/__init__.py",
+          "resolved_paths": [
+            "tests/functional/u/unused/__init__.py"
+          ],
+          "result_tokens": 12,
+          "hit": false,
+          "label": "test_context",
+          "timestamp": "2026-08-27T12:22:40.566393+00:00"
+        },
+        {
+          "access_index": 21,
+          "turn": 26,
+          "kind": "grep",
+          "query": "type_comment =",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 24,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:22:50.642208+00:00"
+        },
+        {
+          "access_index": 22,
+          "turn": 27,
+          "kind": "file_read",
+          "query": "pylint/checkers/variables.py",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 3942,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:22:51.949443+00:00"
+        },
+        {
+          "access_index": 23,
+          "turn": 28,
+          "kind": "grep",
+          "query": "type_comment_returns",
+          "resolved_paths": [
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 39,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:22:57.789784+00:00"
+        }
+      ],
+      "tool_calls": [
+        {
+          "turn": 19,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "pylint/checkers/variables.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T12:22:28.517480+00:00"
+        },
+        {
+          "turn": 20,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/functional/u/unused/unused_type_comment_dotted.py"
+          },
+          "ok": false,
+          "output_excerpt": "no such file",
+          "timestamp": "2026-08-27T12:22:36.048912+00:00"
+        },
+        {
+          "turn": 24,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/functional/u/unused/unused_typing_imports.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T12:22:43.186495+00:00"
+        },
+        {
+          "turn": 25,
+          "name": "run_tests",
+          "arguments": {
+            "path": "tests/functional/u/unused/unused_typing_imports.py"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/pylint-dev__pylint/tests/conftest.py'.\ntests/conftest.py:8: in <module>\n    from pylint import checkers\npylint/checkers/__init__.py:49: in <module>\n    from pylint.checkers.base_checker import BaseChecker, BaseTokenChecker\npylint/checkers/base_checker.py:21: in <module>\n    from pylint.conf",
+          "timestamp": "2026-08-27T12:22:44.776989+00:00"
+        }
+      ],
+      "turns": [
+        {
+          "turn": 1,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 932,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 2,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1039,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 3,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 6012,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 4,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 10324,
+          "completion_tokens": 18
+        },
+        {
+          "turn": 5,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 10504,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 6,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15464,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 7,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15616,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 8,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 20234,
+          "completion_tokens": 32
+        },
+        {
+          "turn": 9,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 20377,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 10,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 24581,
+          "completion_tokens": 285
+        },
+        {
+          "turn": 11,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 24733,
+          "completion_tokens": 34
+        },
+        {
+          "turn": 12,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 25516,
+          "completion_tokens": 1700
+        },
+        {
+          "turn": 13,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29423,
+          "completion_tokens": 286
+        },
+        {
+          "turn": 14,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29576,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 15,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 34524,
+          "completion_tokens": 1820
+        },
+        {
+          "turn": 16,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 34763,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 17,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 35446,
+          "completion_tokens": 1636
+        },
+        {
+          "turn": 18,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 40383,
+          "completion_tokens": 26
+        },
+        {
+          "turn": 19,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 40443,
+          "completion_tokens": 2325
+        },
+        {
+          "turn": 20,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41181,
+          "completion_tokens": 584
+        },
+        {
+          "turn": 21,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41341,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 22,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41620,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 23,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41864,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 24,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41918,
+          "completion_tokens": 159
+        },
+        {
+          "turn": 25,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42103,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 26,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42351,
+          "completion_tokens": 414
+        },
+        {
+          "turn": 27,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42409,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 28,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 46392,
+          "completion_tokens": 350
+        },
+        {
+          "turn": 29,
+          "thought": "BLOCKED: I updated the import-usage tracking to record names referenced in type comments (including dotted names), and added a functional test, but I cannot run the test suite here because pytest fails to import pylint due to a missing dependency:\n\nModuleNotFoundError: No module named 'toml'\n\nFiles changed:\n- pylint/checkers/variables.py: Enhanced _store_type_annotation_node to handle astroid.Attribute (crediting the top-level name for dotted references) and updated _store_type_annotation_names to process node.type_comment when present (only when astroid exposes a parsed node).\n- tests/functional/u/unused/unused_typing_imports.py: Added the regression example (import abc; from abc import ABC; import math # [unused-import]; X = ...  # type: abc.ABC; Y = ...  # type: ABC) to assert no W0611 for abc/ABC while still expecting an unused-import for math.\n\nReason blocked: the test run fails early due to missing third-party module 'toml' required by pylint.config; without installing it I cannot execute the test suite to verify the change.",
+          "abandoned": false,
+          "prompt_tokens": 46465,
+          "completion_tokens": 1709
+        }
+      ],
+      "files_in_diff": [
+        "pylint/checkers/variables.py",
+        "tests/functional/u/unused/unused_typing_imports.py"
+      ],
+      "diff": "diff --git a/pylint/checkers/variables.py b/pylint/checkers/variables.py\nindex 3ddafd599..dc4e94407 100644\n--- a/pylint/checkers/variables.py\n+++ b/pylint/checkers/variables.py\n@@ -1822,13 +1822,26 @@ class VariablesChecker(BaseChecker):\n \n     def _store_type_annotation_node(self, type_annotation):\n         \"\"\"Given a type annotation, store all the name nodes it refers to\"\"\"\n+        # Direct name: `Foo`\n         if isinstance(type_annotation, astroid.Name):\n             self._type_annotation_names.append(type_annotation.name)\n             return\n \n+        # Attribute access: `mod.Type` or `mod.sub.Type` -> record top-level name `mod`\n+        if isinstance(type_annotation, astroid.Attribute):\n+            expr = type_annotation\n+            # Walk down to the left-most expression\n+            while isinstance(expr, astroid.Attribute) and getattr(expr, \"expr\", None):\n+                expr = expr.expr\n+            if isinstance(expr, astroid.Name):\n+                self._type_annotation_names.append(expr.name)\n+            return\n+\n+        # Subscripted types like `List[int]` or `typing.Optional[str]`\n         if not isinstance(type_annotation, astroid.Subscript):\n             return\n \n+        # typing.XYZ[...] -> credit `typing` module\n         if (\n             isinstance(type_annotation.value, astroid.Attribute)\n             and isinstance(type_annotation.value.expr, astroid.Name)\n@@ -1837,16 +1850,24 @@ class VariablesChecker(BaseChecker):\n             self._type_annotation_names.append(TYPING_MODULE)\n             return\n \n+        # Collect all names inside the subscript\n         self._type_annotation_names.extend(\n             annotation.name\n             for annotation in type_annotation.nodes_of_class(astroid.Name)\n         )\n \n     def _store_type_annotation_names(self, node):\n-        type_annotation = node.type_annotation\n-        if not type_annotation:\n-            return\n-        self._store_type_annotation_node(node.type_annotation)\n+        # Prefer PEP 526-style runtime annotation node when present\n+        type_annotation = getattr(node, \"type_annotation\", None)\n+        if type_annotation:\n+            self._store_type_annotation_node(type_annotation)\n+\n+        # Also handle PEP 484 style type comments attached to the AST node\n+        # (node.type_comment is provided by astroid when a real type comment\n+        # is present). Do NOT treat arbitrary string literals as type comments.\n+        type_comment = getattr(node, \"type_comment\", None)\n+        if type_comment:\n+            self._store_type_annotation_node(type_comment)\n \n     def _check_self_cls_assign(self, node):\n         \"\"\"Check that self/cls don't get assigned\"\"\"\ndiff --git a/tests/functional/u/unused/unused_typing_imports.py b/tests/functional/u/unused/unused_typing_imports.py\nindex 7de4e411b..cfe97ff61 100644\n--- a/tests/functional/u/unused/unused_typing_imports.py\n+++ b/tests/functional/u/unused/unused_typing_imports.py\n@@ -54,6 +54,15 @@ def func_test_type_comment(param):\n     return param, re.compile('good')\n \n \n+# New regression for dotted names in type comments\n+import abc\n+from abc import ABC\n+import math  # [unused-import]\n+\n+X = ...  # type: abc.ABC\n+Y = ...  # type: ABC\n+\n+\n def typing_fully_qualified():\n     variable = None  # type: typing.Optional[str]\n     other_variable: 'typing.Optional[str]' = None\n",
+      "completed": false,
+      "failure_reason": "blocked",
+      "total_prompt_tokens": 847534,
+      "total_completion_tokens": 11787
+    }
+  ],
+  "supervisor_plan": "This bug stems from imports used only inside type comments not being accounted for when Pylint decides whether an import is unused. The existing logic already treats names inside annotations as usages, but misses (or incompletely walks) type comments, particularly dotted references like abc.ABC where the module name should mark the import as used. The fix is to ensure the import-usage tracker also walks and records names from type comments, and for dotted names it should mark the leftmost name as used. Because this change is small and localized, it’s best delivered as a single code+tests change rather than being split artificially.",
+  "resolved": false,
+  "schema_version": "antbench-v1",
+  "created_at": "2026-08-27T12:19:38.358393+00:00"
+}

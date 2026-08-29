@@ -1,0 +1,1302 @@
+{
+  "trace_id": "e0ab9353",
+  "repo": "pylint-dev/pylint",
+  "base_commit": "99589b08de8c5a2c6cc61e13a37420a868c80599",
+  "task_prompt": "Use Python type hints for UML generation\nIt seems that pyreverse does not read python type hints (as defined by [PEP 484](https://www.python.org/dev/peps/pep-0484/)), and this does not help when you use `None` as a default value :\r\n\r\n### Code example\r\n```\r\nclass C(object):\r\n    def __init__(self, a: str = None):\r\n        self.a = a\r\n```\r\n\r\n### Current behavior\r\n\r\nOutput of pyreverse :\r\n\r\n![classes_test](https://user-images.githubusercontent.com/22218701/27432305-f10fe03e-574f-11e7-81fa-e2b59e493360.png)\r\n\r\n### Expected behavior\r\n\r\nI would like to see something like : `a : String` in the output.\r\n\r\n### pylint --version output\r\npylint-script.py 1.6.5,\r\nastroid 1.4.9\r\nPython 3.6.0 |Anaconda custom (64-bit)| (default, Dec 23 2016, 11:57:41) [MSC v.1900 64 bit (AMD64)]\r\n\n",
+  "source": "swebench",
+  "delegations": [
+    {
+      "delegation_id": "dfd2fa34",
+      "parent_task_id": "e0ab9353",
+      "worker_id": "w-7f5a85",
+      "message": "Goal: When an instance attribute is initialized from a constructor parameter, pyreverse should use the parameter’s type annotation for the attribute type, even if the parameter’s default is None. For example:\n\nclass C:\n    def __init__(self, a: str = None):\n        self.a = a\n\nToday this yields an attribute with type None/NoneType. After your change, the rendered UML should show the attribute type as str (and whatever canonicalization printers already apply, e.g., String).\n\nWhat to change:\n- In the code that inspects classes/methods to build the UML model of attributes, detect assignments of the form self.<name> = <param_name> inside __init__ (instance initializer). If the right-hand side identifier is a parameter to that __init__, and that parameter has a type annotation, record the attribute’s type from that annotation instead of inferring from the default value or assigned value.\n- Keep existing fallbacks: if there’s no annotation, behave exactly as before.\n- Handle common cases: multiple assignments in __init__, keyword-only params, and annotated parameters with Optional/Union or forward-referenced annotations (string form). For Union/Optional, preserve the textual form already used elsewhere (don’t invent new pretty-printing—use whatever representation existing utilities provide). If there’s a helper in the codebase to stringify annotations, reuse it; otherwise, implement a minimal, robust conversion to a display string for simple names and subscripted types (e.g., Optional[str]).\n- Do not change behavior outside __init__.\n\nTests/Verification:\n- Add or update unit tests under pyreverse’s tests to cover the example above and at least one case with Optional[str] = None. The assertions should validate that the generated model/printer output for the attribute’s type reflects the annotation rather than the default None. Choose whichever existing test harness for pyreverse output is standard in the repo (model-level assertions or printer output snapshots). Keep tests focused and hermetic.\n\nDone when:\n- Running pyreverse on a minimal module containing the example class produces a class attribute labeled with the annotated type (e.g., a: str/String), not None/NoneType.\n- New tests pass locally and do not regress existing behavior when annotations are absent.",
+      "issued_at_turn": 0,
+      "repo_head": "99589b08de8c5a2c6cc61e13a37420a868c80599",
+      "accesses": [
+        {
+          "access_index": 0,
+          "turn": 1,
+          "kind": "dir_list",
+          "query": "",
+          "resolved_paths": [
+            "."
+          ],
+          "result_tokens": 106,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:03.817661+00:00"
+        },
+        {
+          "access_index": 1,
+          "turn": 2,
+          "kind": "grep",
+          "query": "pyreverse",
+          "resolved_paths": [
+            "pylint/__init__.py",
+            "tests/unittest_pyreverse_inspector.py",
+            "tests/unittest_pyreverse_writer.py",
+            "tests/unittest_pyreverse_diadefs.py",
+            "tests/test_pylint_runners.py",
+            "pylint/pyreverse/inspector.py",
+            "pylint/pyreverse/__init__.py",
+            "pylint/pyreverse/utils.py",
+            "pylint/pyreverse/diadefslib.py",
+            "pylint/pyreverse/writer.py",
+            "pylint/pyreverse/diagrams.py",
+            "pylint/pyreverse/main.py"
+          ],
+          "result_tokens": 925,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:07:04.916274+00:00"
+        },
+        {
+          "access_index": 2,
+          "turn": 3,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/inspector.py",
+          "resolved_paths": [
+            "pylint/pyreverse/inspector.py"
+          ],
+          "result_tokens": 3765,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:07:06.494099+00:00"
+        },
+        {
+          "access_index": 3,
+          "turn": 4,
+          "kind": "grep",
+          "query": "instance_attrs",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py",
+            "pylint/checkers/python3.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/classes.py",
+            "pylint/checkers/design_analysis.py",
+            "pylint/checkers/base.py",
+            "pylint/pyreverse/inspector.py",
+            "pylint/pyreverse/diadefslib.py",
+            "pylint/pyreverse/diagrams.py"
+          ],
+          "result_tokens": 471,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:07:08.955109+00:00"
+        },
+        {
+          "access_index": 4,
+          "turn": 5,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/diagrams.py",
+          "resolved_paths": [
+            "pylint/pyreverse/diagrams.py"
+          ],
+          "result_tokens": 2703,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:07:10.084723+00:00"
+        },
+        {
+          "access_index": 5,
+          "turn": 6,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:07:14.413219+00:00"
+        },
+        {
+          "access_index": 6,
+          "turn": 7,
+          "kind": "dir_list",
+          "query": "tests/data",
+          "resolved_paths": [
+            "tests/data"
+          ],
+          "result_tokens": 27,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:21.693916+00:00"
+        },
+        {
+          "access_index": 7,
+          "turn": 8,
+          "kind": "test_read",
+          "query": "tests/data/clientmodule_test.py",
+          "resolved_paths": [
+            "tests/data/clientmodule_test.py"
+          ],
+          "result_tokens": 298,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:07:23.070359+00:00"
+        },
+        {
+          "access_index": 8,
+          "turn": 9,
+          "kind": "grep",
+          "query": "annotation",
+          "resolved_paths": [
+            "tests/checkers/unittest_variables.py",
+            "tests/extensions/test_check_return_docs.py",
+            "tests/extensions/test_check_yields_docs.py",
+            "tests/extensions/test_check_docs.py",
+            "tests/functional/r/redefined_outer_name_type_checking.py",
+            "tests/functional/a/arguments_differ.py",
+            "tests/functional/p/postponed_evaluation_pep585.py",
+            "tests/functional/p/postponed_evaluation_activated_with_alias.py",
+            "tests/functional/p/postponed_evaluation_activated.py",
+            "tests/functional/a/alternative/alternative_union_syntax_error.py",
+            "tests/functional/a/alternative/alternative_union_syntax_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections.py",
+            "tests/functional/g/generic_alias/generic_alias_typing.py",
+            "tests/functional/g/generic_alias/generic_alias_postponed_evaluation_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py39.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37_with_typing.py",
+            "tests/functional/i/inconsistent/inconsistent_returns_noreturn.py",
+            "tests/functional/u/unused/unused_import_positional_only_py38.py",
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "tests/functional/u/use/used_before_assignment_nonlocal.py"
+          ],
+          "result_tokens": 945,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:31.842504+00:00"
+        },
+        {
+          "access_index": 9,
+          "turn": 10,
+          "kind": "grep",
+          "query": "args",
+          "resolved_paths": [
+            "tests/unittest_reporters_json.py",
+            "tests/test_config.py",
+            "tests/test_self.py",
+            "tests/test_pylint_runners.py",
+            "tests/test_func.py",
+            "tests/unittest_reporting.py",
+            "tests/test_check_parallel.py",
+            "script/fix_documentation.py",
+            "script/bump_changelog.py",
+            "examples/custom.py",
+            "tests/lint/unittest_lint.py"
+          ],
+          "result_tokens": 823,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:37.877083+00:00"
+        },
+        {
+          "access_index": 10,
+          "turn": 11,
+          "kind": "grep",
+          "query": "AssignAttr",
+          "resolved_paths": [
+            "tests/checkers/unittest_stdlib.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 187,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:42.724506+00:00"
+        },
+        {
+          "access_index": 11,
+          "turn": 12,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/writer.py",
+          "resolved_paths": [
+            "pylint/pyreverse/writer.py"
+          ],
+          "result_tokens": 2642,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:07:44.160297+00:00"
+        },
+        {
+          "access_index": 12,
+          "turn": 13,
+          "kind": "grep",
+          "query": "attrname",
+          "resolved_paths": [
+            "examples/custom.py",
+            "pylint/checkers/logging.py",
+            "pylint/checkers/python3.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/deprecated.py",
+            "pylint/checkers/utils.py"
+          ],
+          "result_tokens": 933,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:07:50.807476+00:00"
+        },
+        {
+          "access_index": 13,
+          "turn": 14,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/utils.py",
+          "resolved_paths": [
+            "pylint/pyreverse/utils.py"
+          ],
+          "result_tokens": 2326,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:07:56.201494+00:00"
+        },
+        {
+          "access_index": 14,
+          "turn": 15,
+          "kind": "file_read",
+          "query": "pylint/checkers/typecheck.py",
+          "resolved_paths": [
+            "pylint/checkers/typecheck.py"
+          ],
+          "result_tokens": 4549,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:08:04.871209+00:00"
+        },
+        {
+          "access_index": 15,
+          "turn": 16,
+          "kind": "symbol_lookup",
+          "query": "is_attribute_typed_annotation",
+          "resolved_paths": [
+            "pylint/checkers/utils.py"
+          ],
+          "result_tokens": 18,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:08:06.081886+00:00"
+        },
+        {
+          "access_index": 16,
+          "turn": 17,
+          "kind": "file_read",
+          "query": "pylint/checkers/utils.py",
+          "resolved_paths": [
+            "pylint/checkers/utils.py"
+          ],
+          "result_tokens": 1360,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:08:07.307757+00:00"
+        },
+        {
+          "access_index": 17,
+          "turn": 18,
+          "kind": "grep",
+          "query": "assignattr, node",
+          "resolved_paths": [
+            "pylint/pyreverse/inspector.py"
+          ],
+          "result_tokens": 23,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:08:12.601074+00:00"
+        },
+        {
+          "access_index": 18,
+          "turn": 19,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_writer.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_writer.py"
+          ],
+          "result_tokens": 1561,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:08:15.444422+00:00"
+        },
+        {
+          "access_index": 19,
+          "turn": 20,
+          "kind": "grep",
+          "query": "AssignAttr(",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:08:20.774813+00:00"
+        },
+        {
+          "access_index": 20,
+          "turn": 21,
+          "kind": "grep",
+          "query": "AssignAttr",
+          "resolved_paths": [
+            "tests/checkers/unittest_stdlib.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 187,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:08:22.191396+00:00"
+        },
+        {
+          "access_index": 21,
+          "turn": 22,
+          "kind": "file_read",
+          "query": "pylint/checkers/classes.py",
+          "resolved_paths": [
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 4558,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:08:23.403421+00:00"
+        },
+        {
+          "access_index": 22,
+          "turn": 23,
+          "kind": "grep",
+          "query": "arguments.annotations",
+          "resolved_paths": [
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "tests/functional/u/use/used_before_assignment_nonlocal.py",
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 71,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:08:32.391599+00:00"
+        },
+        {
+          "access_index": 23,
+          "turn": 24,
+          "kind": "test_read",
+          "query": "tests/data/classes_No_Name.dot",
+          "resolved_paths": [
+            "tests/data/classes_No_Name.dot"
+          ],
+          "result_tokens": 285,
+          "hit": true,
+          "label": "test_context",
+          "timestamp": "2026-08-27T12:08:57.945333+00:00"
+        },
+        {
+          "access_index": 24,
+          "turn": 25,
+          "kind": "grep",
+          "query": ".annotation",
+          "resolved_paths": [
+            "tests/checkers/unittest_variables.py",
+            "tests/extensions/test_check_return_docs.py",
+            "tests/extensions/test_check_yields_docs.py",
+            "tests/extensions/test_check_docs.py",
+            "tests/functional/r/redefined_outer_name_type_checking.py",
+            "tests/functional/a/arguments_differ.py",
+            "tests/functional/p/postponed_evaluation_pep585.py",
+            "tests/functional/p/postponed_evaluation_activated_with_alias.py",
+            "tests/functional/p/postponed_evaluation_activated.py",
+            "tests/functional/a/alternative/alternative_union_syntax_error.py",
+            "tests/functional/a/alternative/alternative_union_syntax_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections.py",
+            "tests/functional/g/generic_alias/generic_alias_typing.py",
+            "tests/functional/g/generic_alias/generic_alias_postponed_evaluation_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py39.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37_with_typing.py",
+            "tests/functional/i/inconsistent/inconsistent_returns_noreturn.py",
+            "tests/functional/u/unused/unused_import_positional_only_py38.py",
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "tests/functional/u/use/used_before_assignment_nonlocal.py"
+          ],
+          "result_tokens": 945,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:09:25.371756+00:00"
+        },
+        {
+          "access_index": 25,
+          "turn": 26,
+          "kind": "grep",
+          "query": "get_arg(",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:09:33.967241+00:00"
+        },
+        {
+          "access_index": 26,
+          "turn": 27,
+          "kind": "grep",
+          "query": "posonlyargs_annotations",
+          "resolved_paths": [
+            "pylint/checkers/variables.py",
+            "pylint/checkers/utils.py",
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 63,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:09:44.230994+00:00"
+        },
+        {
+          "access_index": 27,
+          "turn": 28,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/diadefslib.py",
+          "resolved_paths": [
+            "pylint/pyreverse/diadefslib.py"
+          ],
+          "result_tokens": 2770,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:09:45.828899+00:00"
+        },
+        {
+          "access_index": 28,
+          "turn": 29,
+          "kind": "grep",
+          "query": "posonlyargs",
+          "resolved_paths": [
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/variables.py",
+            "pylint/checkers/utils.py",
+            "pylint/checkers/classes.py"
+          ],
+          "result_tokens": 182,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:10:04.447505+00:00"
+        },
+        {
+          "access_index": 29,
+          "turn": 30,
+          "kind": "grep",
+          "query": ".annotations",
+          "resolved_paths": [
+            "tests/checkers/unittest_variables.py",
+            "tests/extensions/test_check_return_docs.py",
+            "tests/extensions/test_check_yields_docs.py",
+            "tests/extensions/test_check_docs.py",
+            "tests/functional/r/redefined_outer_name_type_checking.py",
+            "tests/functional/a/arguments_differ.py",
+            "tests/functional/p/postponed_evaluation_pep585.py",
+            "tests/functional/p/postponed_evaluation_activated_with_alias.py",
+            "tests/functional/p/postponed_evaluation_activated.py",
+            "tests/functional/a/alternative/alternative_union_syntax_error.py",
+            "tests/functional/a/alternative/alternative_union_syntax_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections.py",
+            "tests/functional/g/generic_alias/generic_alias_typing.py",
+            "tests/functional/g/generic_alias/generic_alias_postponed_evaluation_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py39.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_mixed_py37.py",
+            "tests/functional/g/generic_alias/generic_alias_collections_py37_with_typing.py",
+            "tests/functional/i/inconsistent/inconsistent_returns_noreturn.py",
+            "tests/functional/u/unused/unused_import_positional_only_py38.py",
+            "tests/functional/u/unused/unused_typing_imports.py",
+            "tests/functional/u/use/used_before_assignment_nonlocal.py",
+            "tests/functional/ext/typing/typing_consider_using_alias.py",
+            "tests/functional/ext/typing/typing_consider_using_union.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/variables.py"
+          ],
+          "result_tokens": 921,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:10:13.555026+00:00"
+        },
+        {
+          "access_index": 30,
+          "turn": 31,
+          "kind": "grep",
+          "query": "safe_infer",
+          "resolved_paths": [
+            "pylint/checkers/logging.py",
+            "pylint/checkers/python3.py",
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/variables.py",
+            "pylint/checkers/deprecated.py",
+            "pylint/checkers/utils.py"
+          ],
+          "result_tokens": 815,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:10:44.580992+00:00"
+        },
+        {
+          "access_index": 31,
+          "turn": 32,
+          "kind": "file_read",
+          "query": "pylint/checkers/utils.py",
+          "resolved_paths": [
+            "pylint/checkers/utils.py"
+          ],
+          "result_tokens": 4740,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:10:46.018203+00:00"
+        },
+        {
+          "access_index": 32,
+          "turn": 33,
+          "kind": "grep",
+          "query": "AnnAssign",
+          "resolved_paths": [
+            "pylint/checkers/typecheck.py",
+            "pylint/checkers/variables.py",
+            "pylint/checkers/utils.py",
+            "pylint/checkers/classes.py",
+            "pylint/checkers/base.py",
+            "pylint/extensions/code_style.py"
+          ],
+          "result_tokens": 387,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:11:21.081749+00:00"
+        },
+        {
+          "access_index": 33,
+          "turn": 35,
+          "kind": "file_read",
+          "query": "pylint/pyreverse/inspector.py",
+          "resolved_paths": [
+            "pylint/pyreverse/inspector.py"
+          ],
+          "result_tokens": 1458,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:12:52.448393+00:00"
+        },
+        {
+          "access_index": 34,
+          "turn": 38,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:13:37.449103+00:00"
+        },
+        {
+          "access_index": 35,
+          "turn": 41,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:14:45.133662+00:00"
+        },
+        {
+          "access_index": 36,
+          "turn": 42,
+          "kind": "file_read",
+          "query": "pylint/config/option_manager_mixin.py",
+          "resolved_paths": [
+            "pylint/config/option_manager_mixin.py"
+          ],
+          "result_tokens": 4093,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:14:51.927713+00:00"
+        },
+        {
+          "access_index": 37,
+          "turn": 43,
+          "kind": "file_read",
+          "query": "pylint/__init__.py",
+          "resolved_paths": [
+            "pylint/__init__.py"
+          ],
+          "result_tokens": 981,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T12:14:55.983504+00:00"
+        },
+        {
+          "access_index": 38,
+          "turn": 45,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:15:40.297077+00:00"
+        },
+        {
+          "access_index": 39,
+          "turn": 47,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:16:00.454118+00:00"
+        },
+        {
+          "access_index": 40,
+          "turn": 50,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_writer.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_writer.py"
+          ],
+          "result_tokens": 1561,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:17:25.652857+00:00"
+        },
+        {
+          "access_index": 41,
+          "turn": 51,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:17:34.763281+00:00"
+        },
+        {
+          "access_index": 42,
+          "turn": 53,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 126,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:17:53.831566+00:00"
+        },
+        {
+          "access_index": 43,
+          "turn": 55,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_inspector.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_inspector.py"
+          ],
+          "result_tokens": 1461,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T12:18:42.038473+00:00"
+        },
+        {
+          "access_index": 44,
+          "turn": 56,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_writer.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_writer.py"
+          ],
+          "result_tokens": 269,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:18:48.900701+00:00"
+        },
+        {
+          "access_index": 45,
+          "turn": 59,
+          "kind": "test_read",
+          "query": "tests/unittest_pyreverse_writer.py",
+          "resolved_paths": [
+            "tests/unittest_pyreverse_writer.py"
+          ],
+          "result_tokens": 202,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T12:19:31.728632+00:00"
+        }
+      ],
+      "tool_calls": [
+        {
+          "turn": 34,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "pylint/pyreverse/inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:12:50.917206+00:00"
+        },
+        {
+          "turn": 36,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "pylint/pyreverse/inspector.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T12:13:05.252156+00:00"
+        },
+        {
+          "turn": 37,
+          "name": "run_tests",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_writer.py"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/pylint-dev__pylint/tests/conftest.py'.\ntests/conftest.py:8: in <module>\n    from pylint import checkers\npylint/checkers/__init__.py:49: in <module>\n    from pylint.checkers.base_checker import BaseChecker, BaseTokenChecker\npylint/checkers/base_checker.py:21: in <module>\n    from pylint.conf",
+          "timestamp": "2026-08-27T12:13:07.404171+00:00"
+        },
+        {
+          "turn": 39,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_init_annotations.py"
+          },
+          "ok": false,
+          "output_excerpt": "no such file",
+          "timestamp": "2026-08-27T12:14:02.323659+00:00"
+        },
+        {
+          "turn": 40,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:14:41.805176+00:00"
+        },
+        {
+          "turn": 44,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:15:34.747377+00:00"
+        },
+        {
+          "turn": 46,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_init_annotations.py"
+          },
+          "ok": false,
+          "output_excerpt": "no such file",
+          "timestamp": "2026-08-27T12:15:55.945949+00:00"
+        },
+        {
+          "turn": 48,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:16:38.652121+00:00"
+        },
+        {
+          "turn": 49,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:17:17.559458+00:00"
+        },
+        {
+          "turn": 52,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/test_pyreverse_init_annotations.py"
+          },
+          "ok": false,
+          "output_excerpt": "no such file",
+          "timestamp": "2026-08-27T12:17:45.057670+00:00"
+        },
+        {
+          "turn": 54,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T12:18:36.333220+00:00"
+        },
+        {
+          "turn": 57,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T12:19:10.266022+00:00"
+        },
+        {
+          "turn": 58,
+          "name": "run_tests",
+          "arguments": {
+            "path": "tests/unittest_pyreverse_inspector.py"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/pylint-dev__pylint/tests/conftest.py'.\ntests/conftest.py:8: in <module>\n    from pylint import checkers\npylint/checkers/__init__.py:49: in <module>\n    from pylint.checkers.base_checker import BaseChecker, BaseTokenChecker\npylint/checkers/base_checker.py:21: in <module>\n    from pylint.conf",
+          "timestamp": "2026-08-27T12:19:12.642283+00:00"
+        }
+      ],
+      "turns": [
+        {
+          "turn": 1,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 970,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 2,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1104,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 3,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 2062,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 4,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 5869,
+          "completion_tokens": 95
+        },
+        {
+          "turn": 5,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 6373,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 6,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 9118,
+          "completion_tokens": 227
+        },
+        {
+          "turn": 7,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 10619,
+          "completion_tokens": 413
+        },
+        {
+          "turn": 8,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 10680,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 9,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 11016,
+          "completion_tokens": 476
+        },
+        {
+          "turn": 10,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 11993,
+          "completion_tokens": 284
+        },
+        {
+          "turn": 11,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 12848,
+          "completion_tokens": 221
+        },
+        {
+          "turn": 12,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 13068,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 13,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15751,
+          "completion_tokens": 349
+        },
+        {
+          "turn": 14,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 16717,
+          "completion_tokens": 291
+        },
+        {
+          "turn": 15,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 19083,
+          "completion_tokens": 547
+        },
+        {
+          "turn": 16,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 23672,
+          "completion_tokens": 21
+        },
+        {
+          "turn": 17,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 23722,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 18,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 25122,
+          "completion_tokens": 287
+        },
+        {
+          "turn": 19,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 25180,
+          "completion_tokens": 98
+        },
+        {
+          "turn": 20,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 26780,
+          "completion_tokens": 287
+        },
+        {
+          "turn": 21,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 26829,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 22,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 27049,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 23,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 31646,
+          "completion_tokens": 605
+        },
+        {
+          "turn": 24,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 31750,
+          "completion_tokens": 1954
+        },
+        {
+          "turn": 25,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 32073,
+          "completion_tokens": 2141
+        },
+        {
+          "turn": 26,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 33051,
+          "completion_tokens": 543
+        },
+        {
+          "turn": 27,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 33100,
+          "completion_tokens": 735
+        },
+        {
+          "turn": 28,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 33198,
+          "completion_tokens": 34
+        },
+        {
+          "turn": 29,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 36013,
+          "completion_tokens": 1374
+        },
+        {
+          "turn": 30,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 36229,
+          "completion_tokens": 669
+        },
+        {
+          "turn": 31,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 37183,
+          "completion_tokens": 2462
+        },
+        {
+          "turn": 32,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 38032,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 33,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42812,
+          "completion_tokens": 2781
+        },
+        {
+          "turn": 34,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 43232,
+          "completion_tokens": 7633
+        },
+        {
+          "turn": 35,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 43973,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 36,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 45473,
+          "completion_tokens": 981
+        },
+        {
+          "turn": 37,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 46213,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 38,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 46455,
+          "completion_tokens": 2339
+        },
+        {
+          "turn": 39,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 47956,
+          "completion_tokens": 2044
+        },
+        {
+          "turn": 40,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 48419,
+          "completion_tokens": 3463
+        },
+        {
+          "turn": 41,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 51326,
+          "completion_tokens": 163
+        },
+        {
+          "turn": 42,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 52827,
+          "completion_tokens": 485
+        },
+        {
+          "turn": 43,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 56962,
+          "completion_tokens": 226
+        },
+        {
+          "turn": 44,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 57982,
+          "completion_tokens": 3335
+        },
+        {
+          "turn": 45,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 60889,
+          "completion_tokens": 355
+        },
+        {
+          "turn": 46,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 62390,
+          "completion_tokens": 1245
+        },
+        {
+          "turn": 47,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 62886,
+          "completion_tokens": 227
+        },
+        {
+          "turn": 48,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 64387,
+          "completion_tokens": 3271
+        },
+        {
+          "turn": 49,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 67294,
+          "completion_tokens": 3391
+        },
+        {
+          "turn": 50,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 70193,
+          "completion_tokens": 610
+        },
+        {
+          "turn": 51,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 71793,
+          "completion_tokens": 483
+        },
+        {
+          "turn": 52,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 73294,
+          "completion_tokens": 788
+        },
+        {
+          "turn": 53,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 73780,
+          "completion_tokens": 355
+        },
+        {
+          "turn": 54,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 73946,
+          "completion_tokens": 3463
+        },
+        {
+          "turn": 55,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 76853,
+          "completion_tokens": 355
+        },
+        {
+          "turn": 56,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 78354,
+          "completion_tokens": 482
+        },
+        {
+          "turn": 57,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 78662,
+          "completion_tokens": 1561
+        },
+        {
+          "turn": 58,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 79278,
+          "completion_tokens": 24
+        },
+        {
+          "turn": 59,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 79521,
+          "completion_tokens": 1506
+        },
+        {
+          "turn": 60,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 79762,
+          "completion_tokens": 352
+        }
+      ],
+      "files_in_diff": [
+        "pylint/pyreverse/inspector.py",
+        "tests/unittest_pyreverse_inspector.py"
+      ],
+      "diff": "diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py\nindex 8fa122022..06ef8098a 100644\n--- a/pylint/pyreverse/inspector.py\n+++ b/pylint/pyreverse/inspector.py\n@@ -230,6 +230,56 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):\n         handle instance_attrs_type\n         \"\"\"\n         try:\n+            # Special-case: if this assignment occurs in an __init__ and the RHS\n+            # is a parameter name that has a type annotation, prefer that\n+            # annotation as the attribute's type instead of inferring from the\n+            # assigned value (which may be None/default).\n+            try:\n+                stmt = node.statement()\n+                rhs = getattr(stmt, \"value\", None)\n+            except Exception:\n+                stmt = None\n+                rhs = None\n+\n+            used_annotation = None\n+            if isinstance(rhs, astroid.Name):\n+                try:\n+                    frame = node.frame()\n+                except Exception:\n+                    frame = None\n+                if isinstance(frame, astroid.FunctionDef) and frame.name == \"__init__\":\n+                    # collect parameter nodes in order: posonly, args, kwonly\n+                    arguments = frame.args\n+                    param_nodes = []\n+                    if getattr(arguments, \"posonlyargs\", None):\n+                        param_nodes.extend(arguments.posonlyargs)\n+                    if getattr(arguments, \"args\", None):\n+                        param_nodes.extend(arguments.args)\n+                    if getattr(arguments, \"kwonlyargs\", None):\n+                        param_nodes.extend(arguments.kwonlyargs)\n+                    param_names = [p.name for p in param_nodes]\n+                    if rhs.name in param_names:\n+                        idx = param_names.index(rhs.name)\n+                        # collect annotations in the same order\n+                        ann_nodes = []\n+                        if getattr(arguments, \"posonlyargs_annotations\", None):\n+                            ann_nodes.extend(arguments.posonlyargs_annotations or [])\n+                        if getattr(arguments, \"annotations\", None):\n+                            ann_nodes.extend(arguments.annotations or [])\n+                        if getattr(arguments, \"kwonlyargs_annotations\", None):\n+                            ann_nodes.extend(arguments.kwonlyargs_annotations or [])\n+                        if idx < len(ann_nodes):\n+                            ann = ann_nodes[idx]\n+                            if ann is not None:\n+                                # try to resolve the annotation to an inferred node\n+                                inferred_ann = utils.safe_infer(ann)\n+                                used_annotation = inferred_ann or ann\n+            if used_annotation is not None:\n+                current = set(parent.instance_attrs_type[node.attrname])\n+                parent.instance_attrs_type[node.attrname] = list(current | {used_annotation})\n+                return\n+\n+            # fallback to normal inference\n             values = set(node.infer())\n             current = set(parent.instance_attrs_type[node.attrname])\n             parent.instance_attrs_type[node.attrname] = list(current | values)\ndiff --git a/tests/unittest_pyreverse_inspector.py b/tests/unittest_pyreverse_inspector.py\nindex e1ff6378e..5368b4771 100644\n--- a/tests/unittest_pyreverse_inspector.py\n+++ b/tests/unittest_pyreverse_inspector.py\n@@ -128,3 +128,56 @@ def test_from_directory(project):\n def test_project_node(project):\n     expected = [\"data\", \"data.clientmodule_test\", \"data.suppliermodule_test\"]\n     assert sorted(project.keys()) == expected\n+\n+\n+# New tests for attribute annotation extraction from __init__ parameters\n+\n+def _get_annotation_string(node):\n+    try:\n+        return node.as_string()\n+    except Exception:\n+        try:\n+            return str(node)\n+        except Exception:\n+            return None\n+\n+\n+def test_init_param_annotation_simple():\n+    module = astroid.parse(\n+        \"\"\"\n+class C:\n+    def __init__(self, a: str = None):\n+        self.a = a\n+\"\"\"\n+    )\n+    klass = module[\"C\"]\n+    linker = inspector.Linker(None)\n+    linker.visit_classdef(klass)\n+    assert hasattr(klass, \"instance_attrs_type\")\n+    type_dict = klass.instance_attrs_type\n+    assert \"a\" in type_dict\n+    ann = type_dict[\"a\"][0]\n+    ann_str = _get_annotation_string(ann)\n+    assert ann_str is not None\n+    assert \"str\" in ann_str\n+\n+\n+def test_init_param_annotation_optional():\n+    module = astroid.parse(\n+        \"\"\"\n+from typing import Optional\n+class C2:\n+    def __init__(self, a: Optional[str] = None):\n+        self.a = a\n+\"\"\"\n+    )\n+    klass = module[\"C2\"]\n+    linker = inspector.Linker(None)\n+    linker.visit_classdef(klass)\n+    assert hasattr(klass, \"instance_attrs_type\")\n+    type_dict = klass.instance_attrs_type\n+    assert \"a\" in type_dict\n+    ann = type_dict[\"a\"][0]\n+    ann_str = _get_annotation_string(ann)\n+    assert ann_str is not None\n+    assert \"Optional\" in ann_str or \"typing.Optional\" in ann_str\n",
+      "completed": false,
+      "failure_reason": "incomplete",
+      "total_prompt_tokens": 2404812,
+      "total_completion_tokens": 56361
+    }
+  ],
+  "supervisor_plan": "This feature is narrow: when pyreverse builds class attributes from assignments in __init__, it should prefer the type hint of the corresponding parameter over the runtime-inferred type from the default value (e.g., None). That can be implemented as a single change in the model-building logic that gathers attributes, plus a focused unit test. Splitting further would only create overlapping edits to the same code path, so this is best delivered as one self-contained task.",
+  "resolved": false,
+  "schema_version": "antbench-v1",
+  "created_at": "2026-08-27T12:06:13.772747+00:00"
+}

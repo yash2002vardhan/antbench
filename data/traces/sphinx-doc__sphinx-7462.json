@@ -1,0 +1,471 @@
+{
+  "trace_id": "bc7ebfcc",
+  "repo": "sphinx-doc/sphinx",
+  "base_commit": "b3e26a6c851133b82b50f4b68b53692076574d13",
+  "task_prompt": "`IndexError: pop from empty list` for empty tuple type annotation\n**Describe the bug**\r\nFollowing notation for empty tuple from [this mypy issue](https://github.com/python/mypy/issues/4211) like\r\n```python\r\nfrom typing import Tuple\r\n\r\ndef foo() -> Tuple[()]:\r\n\t\"\"\"Sample text.\"\"\"\r\n    return ()\r\n```\r\nI get\r\n```bash\r\n  File \"\\path\\to\\site-packages\\sphinx\\domains\\python.py\", line 112, in unparse\r\n    result.pop()\r\nIndexError: pop from empty list\r\n```\r\n\r\n**To Reproduce**\r\nSteps to reproduce the behavior:\r\n1. Write contents of snippet to module and set it to be explorable by sphinx.\r\n2. Install dependencies, in my `docs/requirements.txt`:\r\n```txt\r\nSphinx>=2.0.1\r\nsphinx-rtd-theme>=0.4.3\r\n```\r\n2. Build docs.\r\n\r\n**Expected behavior**\r\nDocs are built and there is `foo` with valid type annotations.\r\n\r\n**Your project**\r\nhttps://github.com/lycantropos/robust/tree/1c7b74e0cc39c1843a89583b8c245f08039a3978\r\n\r\n**Environment info**\r\n- OS: Windows 10, but also reproduces on [readthedocs](https://readthedocs.org/projects/shewchuk/builds/10817256/).\r\n- Python version: 3.8.0\r\n- Sphinx version: 3.0.1\r\n- Sphinx extensions:  `['sphinx.ext.autodoc', 'sphinx.ext.viewcode']`\r\n\n",
+  "source": "swebench",
+  "delegations": [
+    {
+      "delegation_id": "79463d42",
+      "parent_task_id": "bc7ebfcc",
+      "worker_id": "w-0dc681",
+      "message": "Goal: Sphinx must not crash when documenting a function annotated with an empty tuple type (e.g., def foo() -> Tuple[()]: ...). The unparser in the Python domain should format this cleanly instead of raising IndexError: pop from empty list.\n\nWhat to change:\n- In the Python domain’s annotation/typing unparse logic (the error report points at unparse in domains/python.py), fix the handling of Tuple generic arguments so that an empty argument list (Tuple[()]) is handled gracefully. Avoid unconditional result.pop() calls when there are no items to format. If the current logic inserts a trailing comma and then pops it, make that conditional on there actually being content. Ensure it works for both typing.Tuple[()] (PEP 484) and, where applicable, built-in tuple[()] (PEP 585) so we don’t regress on newer Python versions.\n- The end result for empty tuple should be rendered as Tuple[()] (or tuple[()] when Sphinx is configured/behaviorally prefers builtins on newer Python; follow existing conventions in nearby code for casing and import style consistency). Most importantly, no exception should be raised.\n\nHow to tell it’s done:\n- Create or extend an existing test in the test suite that exercises autodoc with a small module containing:\n  from typing import Tuple\n  def foo() -> Tuple[()]:\n      return ()\n  The test should build docs (using the same harness other autodoc signature tests use) and assert that the generated signature for foo includes the empty tuple type without crashing. If the suite has direct tests for annotation stringification, you can unit-test the stringifier/unparser output instead; otherwise, an autodoc-based test is fine.\n- Run the test suite subset you added; it should pass locally. Also ensure existing tests still pass for type formatting around Tuple and other generics.\n- Manually spot-check that no IndexError: pop from empty list is raised when building a minimal project that imports the above foo (optional for your own confidence; not required in the commit).",
+      "issued_at_turn": 0,
+      "repo_head": "b3e26a6c851133b82b50f4b68b53692076574d13",
+      "accesses": [
+        {
+          "access_index": 0,
+          "turn": 1,
+          "kind": "grep",
+          "query": "unparse(",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T18:09:47.095938+00:00"
+        },
+        {
+          "access_index": 1,
+          "turn": 2,
+          "kind": "grep",
+          "query": "def unparse",
+          "resolved_paths": [
+            "sphinx/domains/python.py",
+            "sphinx/pycode/ast.py"
+          ],
+          "result_tokens": 69,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:09:48.520273+00:00"
+        },
+        {
+          "access_index": 2,
+          "turn": 3,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4702,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:09:49.562885+00:00"
+        },
+        {
+          "access_index": 3,
+          "turn": 4,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4648,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:09:50.901245+00:00"
+        },
+        {
+          "access_index": 4,
+          "turn": 5,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4844,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:09:52.013333+00:00"
+        },
+        {
+          "access_index": 5,
+          "turn": 6,
+          "kind": "grep",
+          "query": "Tuple[()]",
+          "resolved_paths": [
+            "tests/test_util_typing.py",
+            "sphinx/config.py",
+            "sphinx/events.py",
+            "sphinx/domains/__init__.py",
+            "sphinx/domains/python.py",
+            "sphinx/util/images.py",
+            "sphinx/pycode/ast.py",
+            "sphinx/transforms/post_transforms/code.py",
+            "sphinx/ext/autodoc/mock.py",
+            "sphinx/ext/autosummary/generate.py",
+            "sphinx/ext/autosummary/__init__.py"
+          ],
+          "result_tokens": 318,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:10:08.814669+00:00"
+        },
+        {
+          "access_index": 6,
+          "turn": 7,
+          "kind": "file_read",
+          "query": "sphinx/pycode/ast.py",
+          "resolved_paths": [
+            "sphinx/pycode/ast.py"
+          ],
+          "result_tokens": 2090,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T18:10:10.709091+00:00"
+        },
+        {
+          "access_index": 7,
+          "turn": 8,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4907,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:10:24.976527+00:00"
+        },
+        {
+          "access_index": 8,
+          "turn": 9,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4909,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:10:45.596313+00:00"
+        },
+        {
+          "access_index": 9,
+          "turn": 10,
+          "kind": "grep",
+          "query": "autodoc",
+          "resolved_paths": [
+            "tests/test_ext_coverage.py",
+            "tests/test_ext_autodoc_mock.py",
+            "tests/test_quickstart.py",
+            "tests/test_ext_autodoc.py",
+            "tests/test_ext_autosummary.py",
+            "tests/test_ext_napoleon.py",
+            "tests/test_ext_doctest.py",
+            "tests/test_ext_viewcode.py",
+            "tests/test_ext_autodoc_private_members.py",
+            "tests/test_builder.py",
+            "tests/test_ext_autodoc_events.py"
+          ],
+          "result_tokens": 956,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T18:10:57.465053+00:00"
+        },
+        {
+          "access_index": 10,
+          "turn": 11,
+          "kind": "test_read",
+          "query": "tests/test_ext_autodoc.py",
+          "resolved_paths": [
+            "tests/test_ext_autodoc.py"
+          ],
+          "result_tokens": 343,
+          "hit": true,
+          "label": "test_context",
+          "timestamp": "2026-08-27T18:10:58.597171+00:00"
+        },
+        {
+          "access_index": 11,
+          "turn": 12,
+          "kind": "dir_list",
+          "query": "tests",
+          "resolved_paths": [
+            "tests"
+          ],
+          "result_tokens": 553,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T18:10:59.760102+00:00"
+        },
+        {
+          "access_index": 12,
+          "turn": 13,
+          "kind": "test_read",
+          "query": "tests/test_util_typing.py",
+          "resolved_paths": [
+            "tests/test_util_typing.py"
+          ],
+          "result_tokens": 1237,
+          "hit": true,
+          "label": "test_context",
+          "timestamp": "2026-08-27T18:11:00.802158+00:00"
+        },
+        {
+          "access_index": 13,
+          "turn": 14,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4910,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:11:16.584701+00:00"
+        },
+        {
+          "access_index": 14,
+          "turn": 15,
+          "kind": "file_read",
+          "query": "sphinx/domains/python.py",
+          "resolved_paths": [
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 4909,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:11:32.638188+00:00"
+        },
+        {
+          "access_index": 15,
+          "turn": 16,
+          "kind": "grep",
+          "query": "_parse_annotation",
+          "resolved_paths": [
+            "tests/test_domain_py.py",
+            "sphinx/domains/python.py"
+          ],
+          "result_tokens": 193,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:11:50.572954+00:00"
+        },
+        {
+          "access_index": 16,
+          "turn": 17,
+          "kind": "test_read",
+          "query": "tests/test_domain_py.py",
+          "resolved_paths": [
+            "tests/test_domain_py.py"
+          ],
+          "result_tokens": 5805,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T18:11:51.703753+00:00"
+        }
+      ],
+      "tool_calls": [
+        {
+          "turn": 18,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "sphinx/domains/python.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T18:12:15.837837+00:00"
+        },
+        {
+          "turn": 19,
+          "name": "run_tests",
+          "arguments": {
+            "path": "tests/test_domain_py.py::test_parse_annotation"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/sphinx-doc__sphinx/tests/conftest.py'.\ntests/conftest.py:12: in <module>\n    import docutils\nE   ModuleNotFoundError: No module named 'docutils'\n",
+          "timestamp": "2026-08-27T18:12:18.208209+00:00"
+        },
+        {
+          "turn": 20,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "tests/test_domain_py.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T18:12:31.036877+00:00"
+        },
+        {
+          "turn": 21,
+          "name": "run_tests",
+          "arguments": {
+            "path": "tests/test_domain_py.py::test_parse_annotation"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/sphinx-doc__sphinx/tests/conftest.py'.\ntests/conftest.py:12: in <module>\n    import docutils\nE   ModuleNotFoundError: No module named 'docutils'\n",
+          "timestamp": "2026-08-27T18:12:32.556450+00:00"
+        }
+      ],
+      "turns": [
+        {
+          "turn": 1,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 931,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 2,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 979,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 3,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1081,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 4,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 5821,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 5,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 10507,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 6,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15389,
+          "completion_tokens": 1373
+        },
+        {
+          "turn": 7,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15740,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 8,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 17870,
+          "completion_tokens": 1057
+        },
+        {
+          "turn": 9,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 22815,
+          "completion_tokens": 1441
+        },
+        {
+          "turn": 10,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 27762,
+          "completion_tokens": 927
+        },
+        {
+          "turn": 11,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 28751,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 12,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29133,
+          "completion_tokens": 22
+        },
+        {
+          "turn": 13,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29719,
+          "completion_tokens": 27
+        },
+        {
+          "turn": 14,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 30994,
+          "completion_tokens": 1313
+        },
+        {
+          "turn": 15,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 35942,
+          "completion_tokens": 1191
+        },
+        {
+          "turn": 16,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 40894,
+          "completion_tokens": 1501
+        },
+        {
+          "turn": 17,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 41120,
+          "completion_tokens": 26
+        },
+        {
+          "turn": 18,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 46962,
+          "completion_tokens": 2047
+        },
+        {
+          "turn": 19,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 47614,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 20,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 47719,
+          "completion_tokens": 1059
+        },
+        {
+          "turn": 21,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 48022,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 22,
+          "thought": "BLOCKED: I made the minimal fix in sphinx/domains/python.py to avoid popping from an empty list when unparsing ast.List and ast.Tuple (handling empty [] and ()), and added a unit check in tests/test_domain_py.py for Tuple[()]. However I could not run the test(s) here because pytest fails to import docutils in this environment (ModuleNotFoundError: No module named 'docutils'), so I couldn't execute the test subset to verify. The edits made:\n- sphinx/domains/python.py: guard empty node.elts for ast.List and ast.Tuple to avoid unconditional result.pop().\n- tests/test_domain_py.py: added an assertion that _parse_annotation(\"Tuple[()]\") yields the expected node sequence.\n\nPlease run the tests locally (install docutils) to confirm; the changes are committed.",
+          "abandoned": false,
+          "prompt_tokens": 48127,
+          "completion_tokens": 880
+        }
+      ],
+      "files_in_diff": [
+        "sphinx/domains/python.py",
+        "tests/test_domain_py.py"
+      ],
+      "diff": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\nindex 3ca730e30..cfeed5368 100644\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -97,6 +97,9 @@ def _parse_annotation(annotation: str) -> List[Node]:\n             return unparse(node.value)\n         elif isinstance(node, ast.List):\n             result = [addnodes.desc_sig_punctuation('', '[')]  # type: List[Node]\n+            if not node.elts:\n+                result.append(addnodes.desc_sig_punctuation('', ']'))\n+                return result\n             for elem in node.elts:\n                 result.extend(unparse(elem))\n                 result.append(addnodes.desc_sig_punctuation('', ', '))\n@@ -114,6 +117,10 @@ def _parse_annotation(annotation: str) -> List[Node]:\n             result.append(addnodes.desc_sig_punctuation('', ']'))\n             return result\n         elif isinstance(node, ast.Tuple):\n+            # empty tuple literal: ()\n+            if not node.elts:\n+                return [addnodes.desc_sig_punctuation('', '('),\n+                        addnodes.desc_sig_punctuation('', ')')]\n             result = []\n             for elem in node.elts:\n                 result.extend(unparse(elem))\ndiff --git a/tests/test_domain_py.py b/tests/test_domain_py.py\nindex cc3d3cf53..c965107cf 100644\n--- a/tests/test_domain_py.py\n+++ b/tests/test_domain_py.py\n@@ -272,6 +272,13 @@ def test_parse_annotation():\n     assert_node(doctree, ([pending_xref, \"None\"],))\n     assert_node(doctree[0], pending_xref, refdomain=\"py\", reftype=\"obj\", reftarget=\"None\")\n \n+    # empty tuple inside a subscript: Tuple[()]\n+    doctree = _parse_annotation(\"Tuple[()]\")\n+    assert_node(doctree, ([pending_xref, \"Tuple\"],\n+                          [desc_sig_punctuation, \"[\"],\n+                          [desc_sig_punctuation, \"(\"],\n+                          [desc_sig_punctuation, \")\"],\n+                          [desc_sig_punctuation, \"]\"]))\n \n \n def test_pyfunction_signature(app):\n",
+      "completed": false,
+      "failure_reason": "blocked",
+      "total_prompt_tokens": 593892,
+      "total_completion_tokens": 13104
+    }
+  ],
+  "supervisor_plan": "This bug is localized to the Python domain’s type-annotation unparser, which pops from an empty list when formatting an empty Tuple type (Tuple[()]). It’s a small, self-contained fix best handled in one change: make the unparser robust for empty tuple arguments and add a focused test to prevent regressions.",
+  "resolved": false,
+  "schema_version": "antbench-v1",
+  "created_at": "2026-08-27T18:09:17.564037+00:00"
+}

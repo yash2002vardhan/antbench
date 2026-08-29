@@ -1,0 +1,1018 @@
+{
+  "trace_id": "70840854",
+  "repo": "matplotlib/matplotlib",
+  "base_commit": "d65c9ca20ddf81ef91199e6d819f9d3506ef477c",
+  "task_prompt": "Inverting an axis using its limits does not work for log scale\n### Bug report\r\n\r\n**Bug summary**\r\nStarting in matplotlib 3.1.0 it is no longer possible to invert a log axis using its limits.\r\n\r\n**Code for reproduction**\r\n```python\r\nimport numpy as np\r\nimport matplotlib.pyplot as plt\r\n\r\n\r\ny = np.linspace(1000e2, 1, 100)\r\nx = np.exp(-np.linspace(0, 1, y.size))\r\n\r\nfor yscale in ('linear', 'log'):\r\n    fig, ax = plt.subplots()\r\n    ax.plot(x, y)\r\n    ax.set_yscale(yscale)\r\n    ax.set_ylim(y.max(), y.min())\r\n```\r\n\r\n**Actual outcome**\r\nThe yaxis is only inverted for the ``\"linear\"`` scale.\r\n\r\n![linear](https://user-images.githubusercontent.com/9482218/60081191-99245e80-9731-11e9-9e4a-eadb3ef58666.png)\r\n\r\n![log](https://user-images.githubusercontent.com/9482218/60081203-9e81a900-9731-11e9-8bae-0be1c9762b16.png)\r\n\r\n**Expected outcome**\r\nI would expect the yaxis to be inverted for both the ``\"linear\"`` and the ``\"log\"`` scale.\r\n\r\n**Matplotlib version**\r\n  * Operating system: Linux and MacOS\r\n  * Matplotlib version: 3.1.0 \r\n  * Python version: 3.7.3\r\n \r\nPython and matplotlib have been installed using conda.\r\n\n",
+  "source": "swebench",
+  "delegations": [
+    {
+      "delegation_id": "07047ac0",
+      "parent_task_id": "70840854",
+      "worker_id": "w-7d506a",
+      "message": "Goal: When users call set_ylim or set_xlim with reversed limits on a log-scaled axis, the axis should invert (i.e., the order must be preserved) just like on linear scales. This regressed in 3.1.0 where reversed limits started getting reordered to ascending on log scales.\n\nWhat to change:\n- Locate the code path where Matplotlib validates/normalizes limits for log scales during set_xlim/set_ylim. This is typically in the limit handling for axes/axis scales (the logic that rejects non-positive values for log and ensures non-singular intervals). Remove any unconditional reordering/sorting of (vmin, vmax) by magnitude or value, and instead preserve the user-provided order. Keep the existing validation that disallows zero/negative bounds for log scales and the non-singular adjustments when vmin == vmax.\n- Ensure the change applies equally to both x and y, but do not add fragile cross-cutting refactors; a minimal, local change in the normalization/limit-range path is preferred.\n\nTests to add:\n- A unit test that reproduces the reporter’s case for y:\n  - Create an axes, plot any positive data, set yscale('log'), then call set_ylim(ymax, ymin) with ymax > ymin > 0.\n  - Assert that get_ylim() returns (ymax, ymin) preserving the reversed order (i.e., axis is inverted). Also optionally assert that ax.yaxis.get_major_locator().tick_values(...) or the displayed ticks are in decreasing order is not necessary; checking the returned limits is sufficient and robust.\n- A symmetric test for x (set_xscale('log') then set_xlim(xmax, xmin)) to lock behavior for both axes.\n- Add a guard test that behavior with invalid values is unchanged: passing a non-positive bound to set_ylim on log still raises or adjusts per current behavior (follow existing semantics—do not change them). For example, confirm that set_ylim(-1, 1) on log raises a ValueError or triggers the same warning/exception currently expected in the test suite. If the existing suite already covers this, you don’t need an extra test.\n\nHow to tell it’s done:\n- Running the new tests passes locally.\n- The repro snippet from the issue:\n  import numpy as np, matplotlib.pyplot as plt\n  y = np.linspace(1000e2, 1, 100)\n  x = np.exp(-np.linspace(0, 1, y.size))\n  fig, ax = plt.subplots(); ax.plot(x, y); ax.set_yscale('log'); ax.set_ylim(y.max(), y.min())\n  shows an inverted y-axis (top=1e5, bottom=1) and ax.get_ylim() == (y.max(), y.min()).\n- Existing autoscaling and log-scale validations remain unchanged besides preserving order when user explicitly sets reversed limits.",
+      "issued_at_turn": 0,
+      "repo_head": "d65c9ca20ddf81ef91199e6d819f9d3506ef477c",
+      "accesses": [
+        {
+          "access_index": 0,
+          "turn": 1,
+          "kind": "dir_list",
+          "query": "",
+          "resolved_paths": [
+            "."
+          ],
+          "result_tokens": 114,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:37.672877+00:00"
+        },
+        {
+          "access_index": 1,
+          "turn": 2,
+          "kind": "dir_list",
+          "query": "src/matplotlib",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:38.836387+00:00"
+        },
+        {
+          "access_index": 2,
+          "turn": 3,
+          "kind": "dir_list",
+          "query": "src",
+          "resolved_paths": [
+            "src"
+          ],
+          "result_tokens": 173,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:39.748572+00:00"
+        },
+        {
+          "access_index": 3,
+          "turn": 4,
+          "kind": "grep",
+          "query": "set_ylim",
+          "resolved_paths": [
+            "tutorials/advanced/transforms_tutorial.py",
+            "tutorials/advanced/path_tutorial.py",
+            "tutorials/colors/colormaps.py",
+            "tutorials/colors/colors.py",
+            "tutorials/intermediate/imshow_extent.py",
+            "tutorials/introductory/usage.py",
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/colorbar.py",
+            "lib/matplotlib/widgets.py",
+            "lib/matplotlib/pyplot.py",
+            "lib/matplotlib/image.py",
+            "lib/matplotlib/axes/_axes.py",
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 977,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:41.176506+00:00"
+        },
+        {
+          "access_index": 4,
+          "turn": 5,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axes/_base.py",
+          "resolved_paths": [
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 4317,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T10:57:42.189042+00:00"
+        },
+        {
+          "access_index": 5,
+          "turn": 6,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axes/_base.py",
+          "resolved_paths": [
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 4490,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T10:57:43.984472+00:00"
+        },
+        {
+          "access_index": 6,
+          "turn": 7,
+          "kind": "grep",
+          "query": "limit_range_for_scale",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/scale.py",
+            "lib/matplotlib/axes/_base.py",
+            "lib/mpl_toolkits/mplot3d/axes3d.py",
+            "examples/scales/custom_scale.py"
+          ],
+          "result_tokens": 355,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:57:46.575566+00:00"
+        },
+        {
+          "access_index": 7,
+          "turn": 8,
+          "kind": "file_read",
+          "query": "lib/matplotlib/scale.py",
+          "resolved_paths": [
+            "lib/matplotlib/scale.py"
+          ],
+          "result_tokens": 4159,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:57:47.615848+00:00"
+        },
+        {
+          "access_index": 8,
+          "turn": 9,
+          "kind": "file_read",
+          "query": "lib/matplotlib/scale.py",
+          "resolved_paths": [
+            "lib/matplotlib/scale.py"
+          ],
+          "result_tokens": 4167,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:57:48.701672+00:00"
+        },
+        {
+          "access_index": 9,
+          "turn": 10,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axis.py",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py"
+          ],
+          "result_tokens": 4366,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:50.904065+00:00"
+        },
+        {
+          "access_index": 10,
+          "turn": 11,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axis.py",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py"
+          ],
+          "result_tokens": 4958,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:57:53.559888+00:00"
+        },
+        {
+          "access_index": 11,
+          "turn": 12,
+          "kind": "grep",
+          "query": "def set_view_interval",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/projections/polar.py"
+          ],
+          "result_tokens": 111,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:57:57.129229+00:00"
+        },
+        {
+          "access_index": 12,
+          "turn": 13,
+          "kind": "file_read",
+          "query": "lib/matplotlib/ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 4107,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:57:58.351185+00:00"
+        },
+        {
+          "access_index": 13,
+          "turn": 14,
+          "kind": "grep",
+          "query": "nonsingular(",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:58:00.492873+00:00"
+        },
+        {
+          "access_index": 14,
+          "turn": 15,
+          "kind": "grep",
+          "query": "nonsingular",
+          "resolved_paths": [
+            "lib/matplotlib/transforms.py",
+            "lib/matplotlib/colorbar.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/axes/_axes.py",
+            "lib/matplotlib/axes/_base.py",
+            "lib/matplotlib/tests/test_dates.py",
+            "lib/matplotlib/tests/test_transforms.py",
+            "lib/matplotlib/projections/polar.py",
+            "lib/mpl_toolkits/mplot3d/axes3d.py"
+          ],
+          "result_tokens": 1120,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:58:01.682662+00:00"
+        },
+        {
+          "access_index": 15,
+          "turn": 16,
+          "kind": "file_read",
+          "query": "lib/matplotlib/transforms.py",
+          "resolved_paths": [
+            "lib/matplotlib/transforms.py"
+          ],
+          "result_tokens": 2336,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T10:58:02.822193+00:00"
+        },
+        {
+          "access_index": 16,
+          "turn": 17,
+          "kind": "file_read",
+          "query": "lib/matplotlib/ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 4903,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:58:06.429116+00:00"
+        },
+        {
+          "access_index": 17,
+          "turn": 18,
+          "kind": "grep",
+          "query": "def set_view_interval",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/projections/polar.py"
+          ],
+          "result_tokens": 111,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:58:17.393397+00:00"
+        },
+        {
+          "access_index": 18,
+          "turn": 19,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axis.py",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py"
+          ],
+          "result_tokens": 5096,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:58:18.538269+00:00"
+        },
+        {
+          "access_index": 19,
+          "turn": 20,
+          "kind": "symbol_lookup",
+          "query": "_validate_converted_limits",
+          "resolved_paths": [
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 25,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:58:38.719983+00:00"
+        },
+        {
+          "access_index": 20,
+          "turn": 21,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axes/_base.py",
+          "resolved_paths": [
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 4308,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T10:58:40.022250+00:00"
+        },
+        {
+          "access_index": 21,
+          "turn": 22,
+          "kind": "grep",
+          "query": "class LogLocator",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 17,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:58:49.421016+00:00"
+        },
+        {
+          "access_index": 22,
+          "turn": 23,
+          "kind": "file_read",
+          "query": "lib/matplotlib/ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 4928,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:58:51.195478+00:00"
+        },
+        {
+          "access_index": 23,
+          "turn": 24,
+          "kind": "grep",
+          "query": "vmin > vmax",
+          "resolved_paths": [
+            "lib/matplotlib/colorbar.py",
+            "lib/matplotlib/widgets.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/colors.py"
+          ],
+          "result_tokens": 211,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:59:06.943225+00:00"
+        },
+        {
+          "access_index": 24,
+          "turn": 25,
+          "kind": "file_read",
+          "query": "lib/matplotlib/ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 5041,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:59:29.930050+00:00"
+        },
+        {
+          "access_index": 25,
+          "turn": 26,
+          "kind": "file_read",
+          "query": "lib/matplotlib/ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/ticker.py"
+          ],
+          "result_tokens": 5041,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T10:59:46.353978+00:00"
+        },
+        {
+          "access_index": 26,
+          "turn": 27,
+          "kind": "grep",
+          "query": "set_ylim(",
+          "resolved_paths": [],
+          "result_tokens": 0,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:59:58.456222+00:00"
+        },
+        {
+          "access_index": 27,
+          "turn": 28,
+          "kind": "grep",
+          "query": "set_ylim",
+          "resolved_paths": [
+            "tutorials/advanced/transforms_tutorial.py",
+            "tutorials/advanced/path_tutorial.py",
+            "tutorials/colors/colormaps.py",
+            "tutorials/colors/colors.py",
+            "tutorials/intermediate/imshow_extent.py",
+            "tutorials/introductory/usage.py",
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/colorbar.py",
+            "lib/matplotlib/widgets.py",
+            "lib/matplotlib/pyplot.py",
+            "lib/matplotlib/image.py",
+            "lib/matplotlib/axes/_axes.py",
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 977,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T10:59:59.939733+00:00"
+        },
+        {
+          "access_index": 28,
+          "turn": 29,
+          "kind": "dir_list",
+          "query": "lib/matplotlib/tests",
+          "resolved_paths": [
+            "lib/matplotlib/tests"
+          ],
+          "result_tokens": 402,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:00:33.627386+00:00"
+        },
+        {
+          "access_index": 29,
+          "turn": 30,
+          "kind": "grep",
+          "query": "log",
+          "resolved_paths": [
+            "setupext.py",
+            "versioneer.py",
+            "tools/boilerplate.py",
+            "tools/github_stats.py",
+            "tools/triage_tests.py",
+            "tools/subset.py",
+            "doc/conf.py",
+            "doc/sphinxext/math_symbol_table.py",
+            "doc/users/generate_credits.py",
+            "tutorials/advanced/transforms_tutorial.py",
+            "tutorials/colors/colormapnorms.py"
+          ],
+          "result_tokens": 891,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:00:35.228912+00:00"
+        },
+        {
+          "access_index": 30,
+          "turn": 31,
+          "kind": "grep",
+          "query": "def set_view_interval(self, vmin, vmax, ignore=False):",
+          "resolved_paths": [],
+          "result_tokens": 3,
+          "hit": false,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:00:46.772651+00:00"
+        },
+        {
+          "access_index": 31,
+          "turn": 32,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axes/_base.py",
+          "resolved_paths": [
+            "lib/matplotlib/axes/_base.py"
+          ],
+          "result_tokens": 5106,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T11:01:01.093951+00:00"
+        },
+        {
+          "access_index": 32,
+          "turn": 33,
+          "kind": "grep",
+          "query": "def set_view_interval",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/projections/polar.py"
+          ],
+          "result_tokens": 111,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T11:01:09.326750+00:00"
+        },
+        {
+          "access_index": 33,
+          "turn": 34,
+          "kind": "symbol_lookup",
+          "query": "set_view_interval",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py",
+            "lib/matplotlib/dates.py",
+            "lib/matplotlib/ticker.py",
+            "lib/matplotlib/projections/polar.py"
+          ],
+          "result_tokens": 111,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T11:01:11.002436+00:00"
+        },
+        {
+          "access_index": 34,
+          "turn": 35,
+          "kind": "file_read",
+          "query": "lib/matplotlib/axis.py",
+          "resolved_paths": [
+            "lib/matplotlib/axis.py"
+          ],
+          "result_tokens": 4535,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:01:12.615373+00:00"
+        },
+        {
+          "access_index": 35,
+          "turn": 39,
+          "kind": "symbol_lookup",
+          "query": "_warn_external",
+          "resolved_paths": [
+            "lib/matplotlib/cbook/__init__.py"
+          ],
+          "result_tokens": 23,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:02:09.811876+00:00"
+        },
+        {
+          "access_index": 36,
+          "turn": 40,
+          "kind": "file_read",
+          "query": "lib/matplotlib/cbook/__init__.py",
+          "resolved_paths": [
+            "lib/matplotlib/cbook/__init__.py"
+          ],
+          "result_tokens": 1955,
+          "hit": true,
+          "label": "resolved_symbol",
+          "timestamp": "2026-08-27T11:02:12.103549+00:00"
+        },
+        {
+          "access_index": 37,
+          "turn": 42,
+          "kind": "dir_list",
+          "query": "lib/matplotlib/tests",
+          "resolved_paths": [
+            "lib/matplotlib/tests"
+          ],
+          "result_tokens": 402,
+          "hit": true,
+          "label": "unused",
+          "timestamp": "2026-08-27T11:02:30.871254+00:00"
+        },
+        {
+          "access_index": 38,
+          "turn": 44,
+          "kind": "test_read",
+          "query": "lib/matplotlib/tests/test_ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/tests/test_ticker.py"
+          ],
+          "result_tokens": 6513,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T11:02:38.086634+00:00"
+        },
+        {
+          "access_index": 39,
+          "turn": 45,
+          "kind": "test_read",
+          "query": "lib/matplotlib/tests/test_ticker.py",
+          "resolved_paths": [
+            "lib/matplotlib/tests/test_ticker.py"
+          ],
+          "result_tokens": 873,
+          "hit": true,
+          "label": "used_in_diff",
+          "timestamp": "2026-08-27T11:02:44.958031+00:00"
+        }
+      ],
+      "tool_calls": [
+        {
+          "turn": 36,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "lib/matplotlib/ticker.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T11:01:48.513698+00:00"
+        },
+        {
+          "turn": 37,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "lib/matplotlib/scale.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T11:01:58.517419+00:00"
+        },
+        {
+          "turn": 38,
+          "name": "run_tests",
+          "arguments": {
+            "path": "lib/matplotlib/tests/test_ticker.py"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/matplotlib__matplotlib/lib/matplotlib/tests/conftest.py'.\nlib/matplotlib/__init__.py:121: in <module>\n    from distutils.version import LooseVersion\nE   ModuleNotFoundError: No module named 'distutils'\n",
+          "timestamp": "2026-08-27T11:02:00.376081+00:00"
+        },
+        {
+          "turn": 41,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "lib/matplotlib/tests/test_limits_log_inverted.py"
+          },
+          "ok": false,
+          "output_excerpt": "no such file",
+          "timestamp": "2026-08-27T11:02:29.102389+00:00"
+        },
+        {
+          "turn": 43,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "lib/matplotlib/tests/test_ticker.py"
+          },
+          "ok": false,
+          "output_excerpt": "old text not found",
+          "timestamp": "2026-08-27T11:02:36.343173+00:00"
+        },
+        {
+          "turn": 46,
+          "name": "apply_edit",
+          "arguments": {
+            "path": "lib/matplotlib/tests/test_ticker.py"
+          },
+          "ok": true,
+          "output_excerpt": "ok",
+          "timestamp": "2026-08-27T11:03:11.785240+00:00"
+        },
+        {
+          "turn": 47,
+          "name": "run_tests",
+          "arguments": {
+            "path": "lib/matplotlib/tests/test_ticker.py"
+          },
+          "ok": false,
+          "output_excerpt": "ImportError while loading conftest '/Users/yashvardhan/Personal_Projects/anticipatory_ms_new_idea/data/repos/matplotlib__matplotlib/lib/matplotlib/tests/conftest.py'.\nlib/matplotlib/__init__.py:121: in <module>\n    from distutils.version import LooseVersion\nE   ModuleNotFoundError: No module named 'distutils'\n",
+          "timestamp": "2026-08-27T11:03:14.226728+00:00"
+        }
+      ],
+      "turns": [
+        {
+          "turn": 1,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1100,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 2,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1242,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 3,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1288,
+          "completion_tokens": 22
+        },
+        {
+          "turn": 4,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 1494,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 5,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 2504,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 6,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 6863,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 7,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 11395,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 8,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 11785,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 9,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 15983,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 10,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 20189,
+          "completion_tokens": 98
+        },
+        {
+          "turn": 11,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 24594,
+          "completion_tokens": 98
+        },
+        {
+          "turn": 12,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29591,
+          "completion_tokens": 223
+        },
+        {
+          "turn": 13,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 29737,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 14,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 33883,
+          "completion_tokens": 95
+        },
+        {
+          "turn": 15,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 33933,
+          "completion_tokens": 26
+        },
+        {
+          "turn": 16,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 35087,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 17,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 37463,
+          "completion_tokens": 227
+        },
+        {
+          "turn": 18,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42406,
+          "completion_tokens": 864
+        },
+        {
+          "turn": 19,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 42552,
+          "completion_tokens": 28
+        },
+        {
+          "turn": 20,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 47687,
+          "completion_tokens": 1755
+        },
+        {
+          "turn": 21,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 47744,
+          "completion_tokens": 31
+        },
+        {
+          "turn": 22,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 52094,
+          "completion_tokens": 670
+        },
+        {
+          "turn": 23,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 52145,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 24,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 57113,
+          "completion_tokens": 1311
+        },
+        {
+          "turn": 25,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 57359,
+          "completion_tokens": 1891
+        },
+        {
+          "turn": 26,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 62440,
+          "completion_tokens": 1385
+        },
+        {
+          "turn": 27,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 67527,
+          "completion_tokens": 990
+        },
+        {
+          "turn": 28,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 67576,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 29,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 68586,
+          "completion_tokens": 2592
+        },
+        {
+          "turn": 30,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 69025,
+          "completion_tokens": 23
+        },
+        {
+          "turn": 31,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 69948,
+          "completion_tokens": 809
+        },
+        {
+          "turn": 32,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 69996,
+          "completion_tokens": 1125
+        },
+        {
+          "turn": 33,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 75144,
+          "completion_tokens": 543
+        },
+        {
+          "turn": 34,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 75290,
+          "completion_tokens": 24
+        },
+        {
+          "turn": 35,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 75436,
+          "completion_tokens": 29
+        },
+        {
+          "turn": 36,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 80011,
+          "completion_tokens": 2611
+        },
+        {
+          "turn": 37,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 80524,
+          "completion_tokens": 316
+        },
+        {
+          "turn": 38,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 80860,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 39,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 80976,
+          "completion_tokens": 601
+        },
+        {
+          "turn": 40,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 81029,
+          "completion_tokens": 32
+        },
+        {
+          "turn": 41,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 83027,
+          "completion_tokens": 1270
+        },
+        {
+          "turn": 42,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 83359,
+          "completion_tokens": 26
+        },
+        {
+          "turn": 43,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 83798,
+          "completion_tokens": 276
+        },
+        {
+          "turn": 44,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 84100,
+          "completion_tokens": 30
+        },
+        {
+          "turn": 45,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 90654,
+          "completion_tokens": 420
+        },
+        {
+          "turn": 46,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 91568,
+          "completion_tokens": 2075
+        },
+        {
+          "turn": 47,
+          "thought": "",
+          "abandoned": false,
+          "prompt_tokens": 93339,
+          "completion_tokens": 25
+        },
+        {
+          "turn": 48,
+          "thought": "DONE — Preserved user-provided reversed limits for log scales: modified LogLocator.nonsingular to remember and restore reversed order and updated LogScale.limit_range_for_scale to preserve ordering (swap-back) after validating non-positive bounds; added unit tests for set_xlim/set_ylim on log scales. Note: I could not run pytest here due to an environment ImportError (missing distutils), but the change is minimal and localized as requested.",
+          "abandoned": false,
+          "prompt_tokens": 93455,
+          "completion_tokens": 992
+        }
+      ],
+      "files_in_diff": [
+        "lib/matplotlib/scale.py",
+        "lib/matplotlib/tests/test_ticker.py",
+        "lib/matplotlib/ticker.py"
+      ],
+      "diff": "diff --git a/lib/matplotlib/scale.py b/lib/matplotlib/scale.py\nindex b482a664b7..282673f07f 100644\n--- a/lib/matplotlib/scale.py\n+++ b/lib/matplotlib/scale.py\n@@ -425,8 +425,17 @@ class LogScale(ScaleBase):\n             minpos = 1e-300  # This value should rarely if ever\n                              # end up with a visible effect.\n \n-        return (minpos if vmin <= 0 else vmin,\n-                minpos if vmax <= 0 else vmax)\n+        swapped = False\n+        if vmin is not None and vmax is not None and vmax < vmin:\n+            vmin, vmax = vmax, vmin\n+            swapped = True\n+\n+        vmin = (minpos if vmin is not None and vmin <= 0 else vmin)\n+        vmax = (minpos if vmax is not None and vmax <= 0 else vmax)\n+\n+        if swapped:\n+            return vmax, vmin\n+        return vmin, vmax\n \n \n class FuncScaleLog(LogScale):\ndiff --git a/lib/matplotlib/tests/test_ticker.py b/lib/matplotlib/tests/test_ticker.py\nindex ed61f9b11e..5a50151171 100644\n--- a/lib/matplotlib/tests/test_ticker.py\n+++ b/lib/matplotlib/tests/test_ticker.py\n@@ -965,3 +965,33 @@ def test_remove_overlap(remove_overlapping_locs, expected_num):\n     assert len(ax.xaxis.get_minor_ticks()) == expected_num\n     assert len(ax.xaxis.get_minorticklabels()) == expected_num\n     assert len(ax.xaxis.get_minorticklines()) == expected_num*2\n+\n+\n+# Tests ensuring that when setting limits on log-scaled axes with reversed\n+# order, the user-provided order is preserved rather than being silently\n+# reordered to ascending values. This matches the behavior on linear scales.\n+\n+def test_set_ylim_reversed_log_preserves_order():\n+    import numpy as _np\n+    x = _np.linspace(0, 1, 100)\n+    y = _np.linspace(1e2, 1e5, 100)\n+    fig, ax = plt.subplots()\n+    ax.plot(x, y)\n+    ax.set_yscale('log')\n+    ax.set_ylim(y.max(), y.min())\n+    bottom, top = ax.get_ylim()\n+    assert _np.allclose((bottom, top), (y.max(), y.min()))\n+    plt.close(fig)\n+\n+\n+def test_set_xlim_reversed_log_preserves_order():\n+    import numpy as _np\n+    x = _np.linspace(1e-1, 1e3, 100)\n+    y = _np.linspace(0, 1, x.size)\n+    fig, ax = plt.subplots()\n+    ax.plot(x, y)\n+    ax.set_xscale('log')\n+    ax.set_xlim(x.max(), x.min())\n+    left, right = ax.get_xlim()\n+    assert _np.allclose((left, right), (x.max(), x.min()))\n+    plt.close(fig)\ndiff --git a/lib/matplotlib/ticker.py b/lib/matplotlib/ticker.py\nindex 209a3f92ce..3cb5db1d88 100644\n--- a/lib/matplotlib/ticker.py\n+++ b/lib/matplotlib/ticker.py\n@@ -2379,8 +2379,10 @@ class LogLocator(Locator):\n         if not np.isfinite(vmin) or not np.isfinite(vmax):\n             return 1, 10  # initial range, no data plotted yet\n \n+        swapped = False\n         if vmin > vmax:\n             vmin, vmax = vmax, vmin\n+            swapped = True\n         if vmax <= 0:\n             cbook._warn_external(\n                 \"Data has no positive values, and therefore cannot be \"\n@@ -2395,6 +2397,8 @@ class LogLocator(Locator):\n         if vmin == vmax:\n             vmin = _decade_less(vmin, self._base)\n             vmax = _decade_greater(vmax, self._base)\n+        if swapped:\n+            return vmax, vmin\n         return vmin, vmax\n \n \n",
+      "completed": true,
+      "failure_reason": null,
+      "total_prompt_tokens": 2504899,
+      "total_completion_tokens": 23895
+    }
+  ],
+  "supervisor_plan": "This is a single-point behavioral regression: reversed limits on log-scaled axes are being reordered to ascending, preventing inversion. The clean fix is to preserve user-specified order when setting view limits on log scales while still validating positivity/nonsingularity. This can be done in the limit/scale normalization path used by set_xlim/set_ylim. I’m assigning one subtask to implement the fix and add targeted tests that lock the behavior for y (and optionally x) without touching unrelated code paths.",
+  "resolved": false,
+  "schema_version": "antbench-v1",
+  "created_at": "2026-08-27T10:56:57.804423+00:00"
+}
