@@ -12,7 +12,12 @@ the n=25 row is the first 25 delegations of the same ordering that produces the
 n=57 row. That is a reconstruction, not a recording: the original n=25 run
 scored whichever delegations happened to exist at the time. It answers the
 weaker but checkable question -- does the sign of this difference depend on how
-much data you have? -- which is the claim the pitch actually makes.
+much data you have? -- which is the claim being made.
+
+MEASURED: yes. +0.046 at n=25, -0.081 at n=41, -0.069 at n=57; no row separates
+the two predictors at p<0.05. The runs recorded live during collection read
++0.133 / -0.004 / -0.057 on different delegation subsets -- different
+magnitudes, same reversal.
 
     uv run python scripts/reversal_history.py
 """
