@@ -12,11 +12,11 @@ so expand lexical seeds one hop along import edges. This script tests that.
 
     uv run python scripts/experiment_graph.py
 
-RESULT: it does not work. Expansion costs -0.031 recall@8, winning on 3
-delegations and losing on 10. Detail in pitch/PITCH.md; the short version is
-that import graphs are too dense (xarray averages 7.9 neighbours per file, max
-68), so expansion trades a known-decent seed for a near-random pick from
-dozens of candidates. It helps only where seeds are already worthless.
+RESULT: it does not work. Expansion costs -0.049 recall@8 over the 57-delegation
+corpus, winning on 4 delegations and losing on 15 (p=0.0185). The short version
+is that import graphs are too dense (scikit-learn averages 7.0 neighbours per
+file, max 203), so expansion trades a known-decent seed for a near-random pick
+from dozens of candidates. It helps only where seeds are already worthless.
 """
 
 from __future__ import annotations

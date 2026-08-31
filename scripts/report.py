@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import random
 import statistics
 import sys
 from pathlib import Path
@@ -123,6 +124,35 @@ def main() -> int:
         print(
             f"  {repo:28} {len(index.paths):6d} {density:9.1f} "
             f"{recall:9.2f} {len(recalls):3d}"
+        )
+
+    # Is the spread across repositories larger than chance grouping produces?
+    # Shuffle the repository labels across delegations and rebuild the same
+    # spread statistic; a real repository effect should exceed nearly every
+    # relabelling. This is the test behind the per-repo claim in the pitch.
+    labelled = [(row.repo, row.recall_at(8)) for row in scored.get("lexical", [])]
+    if len({r for r, _ in labelled}) > 1:
+        def spread(pairs: list[tuple[str, float]]) -> float:
+            groups: dict[str, list[float]] = collections.defaultdict(list)
+            for repo, value in pairs:
+                groups[repo].append(value)
+            return statistics.pstdev([statistics.mean(v) for v in groups.values()])
+
+        observed = spread(labelled)
+        labels = [r for r, _ in labelled]
+        values = [v for _, v in labelled]
+        rng = random.Random(20260829)
+        resamples = 20_000
+        at_least = sum(
+            1
+            for _ in range(resamples)
+            if spread(list(zip(rng.sample(labels, len(labels)), values))) >= observed
+        )
+        p_repo = (at_least + 1) / (resamples + 1)
+        print(
+            f"\n  between-repository spread: sd of per-repo means = {observed:.3f}, "
+            f"p={p_repo:.4f}\n  ({resamples:,} label permutations; "
+            f"{'separated' if p_repo < 0.05 else 'NOT separated'} at 0.05)"
         )
 
     if len(points) > 2:
